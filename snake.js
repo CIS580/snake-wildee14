@@ -6,14 +6,26 @@ backBuffer.width = frontBuffer.width;
 backBuffer.height = frontBuffer.height;
 var backCtx = backBuffer.getContext('2d');
 var oldTime = performance.now();
-var snake = Image();
-snake.src = "red-square.jpeg";
+var snake = new Image();
+snake.src = src = 'red-square.jpg';
+var apple = new Image();
+apple.src = src = 'blue-square.jpg';
 
+var snakeArr = [snake];
+
+
+var counter = 0;
+var xSnake = 0;
+var ySnake = 0;
+var xApple = 0;
+var yApple = 0;
+
+var hasApple = false;
 var input = {
-  left: false;
-  right: false;
-  up: false;
-  down: false;
+  left: false,
+  right: false,
+  up: false,
+  down: false,
 }
 
 
@@ -53,6 +65,9 @@ window.onkeyup = function(event) {
     case 37:
     case 65:
       input.left = false;
+      snakeArr.push(snake);
+      console.log("number of snakes" + snakeArr.length);
+      console.log("xApp "+ xApple  + "yApp " + yApple);
       break;
     // Right
     case 39:
@@ -93,7 +108,7 @@ function loop(newTime) {
   // Run the next loop
   window.requestAnimationFrame(loop);
 }
-//if (line < (r1 +r2)^2 ) overlap  using d^2 = (x1-x2)^2 + (y1 - y2)^2
+//if (line < (r1 +r2)^2 ) overlap  using d^2 = (xSnake1-xSnake2)^2 + (ySnake1 - ySnake2)^2
 //else no collision overlap
 //if aB > bT vice versa, they arent touching
 //if aL > bR vice versa, they arent touching
@@ -113,16 +128,16 @@ function update(elapsedTime) {
   // TODO: Grow the snake periodically
 
   // TODO: Move the snake
-  if(input.up) y-= 1;
-  else if(input.down) y += 1;
-  else if(input.left) x -= 1;
-  else if(input.right) x += 1;
+  if(input.up) {ySnake-= 3;}
+  else if(input.down) {ySnake += 3;}
+  else if(input.left) {xSnake -= 3; }
+  else if(input.right) {xSnake += 3;}
   // TODO: Determine if the snake has moved out-of-bounds (offscreen)
-  if(x>760 || x<0 || y>480 || y<0) window.alert("You fail");
+  if(xSnake>760 || xSnake<0 || ySnake>480 || ySnake<0) fail();
   // TODO: Determine if the snake has eaten an apple
 
   // TODO: Determine if the snake has eaten its tail
-
+  checkForTail();
   // TODO: [Extra Credit] Determine if the snake has run into an obstacle
 
 }
@@ -137,24 +152,44 @@ function render(elapsedTime) {
   backCtx.clearRect(0, 0, backBuffer.width, backBuffer.height);
 
   // TODO: Draw the game objects into the backBuffer
-  backCtx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!hasApple) createApple();
 
-  backCtx.drawImage(snake, 0, 0, 200, 100);
-  for(i = 0; i < 100; i++){
-    backCtx.fillStyle = "blue";
-    backCtx.fillRect(
-       (i*20)%100,
-       (i*20)%100,
-       10,
-       10);
-  }
+  checkForApple();
 
-  backCtx.fillStyle = "red"
-  backCtx.fillRect(x, y, 5, 5);
+  backCtx.drawImage(snake,xSnake, ySnake, 10, 10);
+}
 
-  ctx.drawImage(backCanvas, 0, 0);
+function checkForTail() {
 
 }
 
+function createApple() {
+  backCtx.clearRect(0,0,backBuffer.width, backBuffer.height);
+  xApple = Math.floor(Math.random() * 760);
+  yApple = Math.floor(Math.random() * 480);
+  backCtx.drawImage(apple, xApple, yApple,10, 10);
+  hasApple = true;
+  console.log("created apple");
+}
+
+function checkForApple() {
+  if ( (xSnake == xApple && ySnake == yApple)||
+       (xSnake == (xApple+10) && ySnake == yApple) ||
+       (xSnake == (xApple+10) && ySnake == (yApple-10)) ||
+       (xSnake == (xApple+10) && ySnake == (yApple-10))
+     ){
+    counter++;
+    createApple();
+  };
+}
+
+
+/**
+  * @function fail
+  * Ends current game from instance of out of bounds or hit tail
+  */
+function fail(){
+  document.getElementById('title').innerHTML = "Game Over!   </br>Score: " + counter ;
+}
 /* Launch the game */
 window.requestAnimationFrame(loop);
