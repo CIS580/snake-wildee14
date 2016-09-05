@@ -187,20 +187,20 @@ function checkForApple() {
     createApple();
     snakeArr.unshift(snake);
     if (input.up) {
-      snakeArrY.unshift(snakeArrY[0]-20);
+      snakeArrY.unshift(snakeArrY[0]-10);
       snakeArrX.unshift(snakeArrX[0]);
     }
     else if (input.down) {
-      snakeArrY.unshift(snakeArrY[0]+20);
+      snakeArrY.unshift(snakeArrY[0]+10);
       snakeArrX.unshift(snakeArrX[0]);
     }
     else if (input.right) {
       snakeArrY.unshift(snakeArrY[0]);
-      snakeArrX.unshift(snakeArrX[0]+20);
+      snakeArrX.unshift(snakeArrX[0]+10);
     }
     else if (input.left) {
       snakeArrY.unshift(snakeArrY[0]);
-      snakeArrX.unshift(snakeArrX[0]-20);
+      snakeArrX.unshift(snakeArrX[0]-10);
     }
     for (var i = 0; i < snakeArr.length; i++) {
     console.log(snakeArrY[i] + "  " + snakeArrX[i]);
