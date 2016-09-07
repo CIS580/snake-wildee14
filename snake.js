@@ -12,6 +12,9 @@ snake.src = src = 'red-square.jpg';
 var apple = new Image();
 apple.src = src = 'blue-square.jpg';
 
+var begin = true;
+var failed = false;
+
 var input = {
   left: false,
   right: false,
@@ -19,22 +22,19 @@ var input = {
   down: false,
 }
 
-var failed = false;
-var snakeArr = [snake];
-var snakeArrX = [380];
-var snakeArrY = [240];
-var snakeArrDir = [input.right];
+var snakeArr = [];
+var snakeArrDir;
 var counter = 0;
 
+//initial apple coordinates
 var xApple = Math.floor(Math.random() * (backBuffer.width - 10));
 var yApple = Math.floor(Math.random() * (backBuffer.height - 10));
-
-
 
 
 window.onkeydown = function(event) {
   event.preventDefault();
   if(!failed){
+    //Update whether the key press is a certain direction
     switch(event.keyCode) {
 
       // Left
@@ -87,18 +87,27 @@ window.onkeydown = function(event) {
   return false;
 }
 
+/**
+ * @function first
+ * Initialize the array
+ */
+function first() {
 
-
+  if (begin) {snakeArrDir  = [];
+              begin = false;
+              return true;}
+  return false;
+}
 /**
  * @function loop
  * The main game loop.
  * @param{time} the current time as a DOMHighResTimeStamp
  */
 function loop(newTime) {
+  if(first())  {snakeArrDir.push({x: 380, y: 240})};
   if(!failed){
     var elapsedTime = newTime - oldTime;
     oldTime = newTime;
-
 
     update(elapsedTime);
     render(elapsedTime);
@@ -113,7 +122,6 @@ function loop(newTime) {
 
 }
 
-
 /**
  * @function update
  * Updates the game state, moving
@@ -125,25 +133,28 @@ function loop(newTime) {
 function update(elapsedTime) {
 
   // Move the snake
+  var next = {x: 360, y: 240};
+  if(input.up){next = {x: (snakeArrDir[0].x),
+                       y: (snakeArrDir[0].y-4)};}
+  else if(input.down){next = {x: (snakeArrDir[0].x),
+                              y: (snakeArrDir[0].y+4)};}
+  else if(input.left){next = {x: (snakeArrDir[0].x-4),
+                              y: (snakeArrDir[0].y)};}
+  else if(input.right){next = {x: (snakeArrDir[0].x+4),
+                               y: (snakeArrDir[0].y)};}
 
-  if(input.up) {snakeArrDir.unshift(input.up);}
-  else if(input.down) {snakeArrDir.unshift(input.down);}
-  else if(input.left) {snakeArrDir.unshift(input.left);}
-  else if(input.right) {snakeArrDir.unshift(input.right);}
-  for (var i = 0; i < snakeArrX.length; i++) {
-    if(snakeArrDir[i] == input.up) snakeArrY[i] -= 3;
-    else if(snakeArrDir[i] == input.down) snakeArrY[i] += 3;
-    else if(snakeArrDir[i] == input.right) snakeArrX[i] += 3;
-    else if(snakeArrDir[i] == input.left) snakeArrX[i] -= 3;
-  };
+  //If the head is on apple, remove the instance from the array
+  if(!checkForApple(next.x, next.y)) {snakeArrDir.pop(); snakeArr.pop();}
+
+  //Add the next segment to the beginning
+  snakeArrDir.unshift(next);
+  snakeArr.push(snake);
 
   // out-of-bounds (offscreen)
-  if(snakeArrX[0]>760 || snakeArrX[0]<0 || snakeArrY[0]>480 || snakeArrY[0]<0) end();
+  if(snakeArrDir[snakeArrDir.length-1].x>760 || snakeArrDir[snakeArrDir.length-1].x<0
+  || snakeArrDir[snakeArrDir.length-1].y>480 || snakeArrDir[snakeArrDir.length-1].y<0) end();
 
-  // TODO: Determine if the snake has eaten its tail
   checkForTail();
-  // TODO: [Extra Credit] Determine if the snake has run into an obstacle
-
 }
 
 /**
@@ -155,18 +166,33 @@ function update(elapsedTime) {
 function render(elapsedTime) {
   backCtx.clearRect(0, 0, backBuffer.width, backBuffer.height);
   // Draw the game objects into the backBuffer
-  checkForApple();
   backCtx.drawImage(apple, xApple, yApple, 10,10);
+
   for (var i = 0; i < snakeArr.length; i++) {
-    backCtx.drawImage(snake,snakeArrX[i] , snakeArrY[i] , 10, 10);
-    //console.log(snakeArrY[i]+" " + snakeArrX[i]);
+    backCtx.drawImage(snake,snakeArrDir[i].x , snakeArrDir[i].y , 10, 10);
   }
 }
 
+/**
+  * @function checkForTail
+  * Check if the segments are intersetcting the head
+  */
 function checkForTail() {
-
+  for (var i = 0; i < snakeArr.length-1; i++) {
+    //If a segment and the head intersetct, throw end()
+    if (  snakeArrDir[snakeArrDir.length-1].x == snakeArrDir[i].x &&
+          snakeArrDir[snakeArrDir.length-1].y == snakeArrDir[i].y)
+        {
+          console.log("failed tail");
+          end();
+        }
+  }
 }
 
+/**
+  * @function createApple
+  * Create a new random apple that draws the apple.
+  */
 function createApple() {
   xApple = Math.floor(Math.random() * 750);
   yApple = Math.floor(Math.random() * 470);
@@ -174,39 +200,30 @@ function createApple() {
   hasApple = true;
   console.log("created apple");
 }
-//if (line < (r1 +r2)^2 ) overlap  using d^2 = (xSnake1-xSnake2)^2 + (ySnake1 - ySnake2)^2
-//else no collision overlap
-//if aB > bT vice versa, they arent touching
-//if aL > bR vice versa, they arent touching
 
-
-function checkForApple() {
-  if ( ( Math.pow(snakeArrX[0] - xApple, 2) + Math.pow(snakeArrY[0] - yApple, 2)) < 20){
+/**
+  * @function checkForApple
+  * Check if the apple is intersetcting the head
+  */
+function checkForApple(x, y) {
+  if ( ( Math.pow(x - xApple, 2) +
+         Math.pow(y - yApple, 2)) < 20){
+    //Update score
     counter++;
     document.getElementById('score').innerHTML ="Score: "+ counter ;
+
+    //Generate a new apple
     createApple();
-    snakeArr.unshift(snake);
-    if (input.up) {
-      snakeArrY.unshift(snakeArrY[0]-10);
-      snakeArrX.unshift(snakeArrX[0]);
+
+    //apple touching head
+    return true;
     }
-    else if (input.down) {
-      snakeArrY.unshift(snakeArrY[0]+10);
-      snakeArrX.unshift(snakeArrX[0]);
-    }
-    else if (input.right) {
-      snakeArrY.unshift(snakeArrY[0]);
-      snakeArrX.unshift(snakeArrX[0]+10);
-    }
-    else if (input.left) {
-      snakeArrY.unshift(snakeArrY[0]);
-      snakeArrX.unshift(snakeArrX[0]-10);
-    }
-    for (var i = 0; i < snakeArr.length; i++) {
-    console.log(snakeArrY[i] + "  " + snakeArrX[i]);
-    }
+  else{
+    //apple and head not touching
+    return false;
+  }
   };
-}
+
 
 
 /**
